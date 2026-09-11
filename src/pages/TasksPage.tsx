@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useTasks } from '../hooks/useTasks';
+import { useUsers } from '../hooks/useUsers';
 import TaskModal from '../components/TaskModal';
 
 export default function TasksPage() {
   const { tasks, total, page, setPage, loading, createTask, deleteTask, deleteMultipleTasks } = useTasks();
+  const { users } = useUsers();
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const userMap = new Map(users.map((u) => [u.id, u.name]));
 
   const totalPages = Math.ceil(total / 10);
 
@@ -70,7 +74,7 @@ export default function TasksPage() {
                 <th className="px-4 py-3 text-left">Nombre</th>
                 <th className="px-4 py-3 text-left">Fecha Inicio</th>
                 <th className="px-4 py-3 text-left">Horas Estimadas</th>
-                <th className="px-4 py-3 text-left">Usuario ID</th>
+                <th className="px-4 py-3 text-left">Usuario</th>
                 <th className="px-4 py-3 text-left">Acciones</th>
               </tr>
             </thead>
@@ -87,7 +91,7 @@ export default function TasksPage() {
                   <td className="px-4 py-3 font-medium">{task.nombre}</td>
                   <td className="px-4 py-3 text-gray-600">{formatDate(task.fechaInicio)}</td>
                   <td className="px-4 py-3 text-gray-600">{task.horasEstimadas}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{task.userId}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500">{userMap.get(task.userId) || task.userId}</td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => deleteTask(task.id)}
@@ -117,7 +121,7 @@ export default function TasksPage() {
         </div>
       )}
 
-      {showModal && <TaskModal onClose={() => setShowModal(false)} onSubmit={createTask} />}
+      {showModal && <TaskModal onClose={() => setShowModal(false)} onSubmit={createTask} users={users} />}
     </div>
   );
 }

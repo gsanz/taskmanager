@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import type { User } from '../types';
 
 interface Props {
   onClose: () => void;
   onSubmit: (task: { nombre: string; fechaInicio: string; horasEstimadas: number; userId: string }) => void;
+  users: User[];
 }
 
-export default function TaskModal({ onClose, onSubmit }: Props) {
+export default function TaskModal({ onClose, onSubmit, users }: Props) {
   const [nombre, setNombre] = useState('');
   const [fechaInicio, setFechaInicio] = useState('');
   const [horasEstimadas, setHorasEstimadas] = useState('');
@@ -46,14 +48,17 @@ export default function TaskModal({ onClose, onSubmit }: Props) {
             className="w-full border rounded px-3 py-2"
             required
           />
-          <input
-            type="text"
-            placeholder="Usuario ID"
+          <select
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
             className="w-full border rounded px-3 py-2"
             required
-          />
+          >
+            <option value="">Seleccionar usuario</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>{u.name}</option>
+            ))}
+          </select>
           <div className="flex justify-end gap-2">
             <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">
               Cancelar
