@@ -6,6 +6,7 @@ import UserModal from '../components/UserModal';
 export default function UsersPage() {
   const { users, total, page, setPage, loading, createUser, deleteUser, deleteMultipleUsers } = useUsers();
   const { roles } = useRoles();
+  const roleMap = new Map(roles.map((r) => [r.id, r.nombre]));
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -55,21 +56,21 @@ export default function UsersPage() {
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    onChange={(e) => {
-                      if (e.target.checked) setSelected(new Set(users.map((u) => u.id)));
-                      else setSelected(new Set());
-                    }}
-                  />
-                </th>
-                <th className="px-4 py-3 text-left">Nombre</th>
-                <th className="px-4 py-3 text-left">Email</th>
-                <th className="px-4 py-3 text-left">Role ID</th>
-                <th className="px-4 py-3 text-left">Acciones</th>
-              </tr>
+               <tr>
+                 <th className="px-4 py-3 text-left">
+                   <input
+                     type="checkbox"
+                     onChange={(e) => {
+                       if (e.target.checked) setSelected(new Set(users.map((u) => u.id)));
+                       else setSelected(new Set());
+                     }}
+                   />
+                 </th>
+                 <th className="px-4 py-3 text-left">Nombre</th>
+                 <th className="px-4 py-3 text-left">Email</th>
+                 <th className="px-4 py-3 text-left">Rol</th>
+                 <th className="px-4 py-3 text-left">Acciones</th>
+               </tr>
             </thead>
             <tbody>
               {users.map((user) => (
@@ -83,7 +84,7 @@ export default function UsersPage() {
                   </td>
                   <td className="px-4 py-3">{user.name}</td>
                   <td className="px-4 py-3">{user.email}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{user.roleId}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500">{roleMap.get(user.roleId) || user.roleId}</td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => deleteUser(user.id)}
