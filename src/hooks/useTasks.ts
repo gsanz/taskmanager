@@ -24,7 +24,7 @@ export function useTasks() {
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
-  const createTask = async (task: { title: string; description?: string; status?: string; assignedTo?: string }) => {
+  const createTask = async (task: { nombre: string; fechaInicio: string; horasEstimadas: number; userId: string }) => {
     await client.post('/tasks', task);
     fetchTasks();
   };

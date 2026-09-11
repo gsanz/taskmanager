@@ -2,18 +2,18 @@ import { useState } from 'react';
 
 interface Props {
   onClose: () => void;
-  onSubmit: (task: { title: string; description?: string; status?: string; assignedTo?: string }) => void;
+  onSubmit: (task: { nombre: string; fechaInicio: string; horasEstimadas: number; userId: string }) => void;
 }
 
 export default function TaskModal({ onClose, onSubmit }: Props) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState('pending');
-  const [assignedTo, setAssignedTo] = useState('');
+  const [nombre, setNombre] = useState('');
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [horasEstimadas, setHorasEstimadas] = useState('');
+  const [userId, setUserId] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ title, description, status, assignedTo: assignedTo || undefined });
+    onSubmit({ nombre, fechaInicio, horasEstimadas: Number(horasEstimadas), userId });
     onClose();
   };
 
@@ -24,34 +24,35 @@ export default function TaskModal({ onClose, onSubmit }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
-            placeholder="Título"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Nombre"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
             className="w-full border rounded px-3 py-2"
             required
           />
-          <textarea
-            placeholder="Descripción"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+          <input
+            type="date"
+            placeholder="Fecha de inicio"
+            value={fechaInicio}
+            onChange={(e) => setFechaInicio(e.target.value)}
             className="w-full border rounded px-3 py-2"
-            rows={3}
+            required
           />
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
+          <input
+            type="number"
+            placeholder="Horas estimadas"
+            value={horasEstimadas}
+            onChange={(e) => setHorasEstimadas(e.target.value)}
             className="w-full border rounded px-3 py-2"
-          >
-            <option value="pending">Pendiente</option>
-            <option value="in_progress">En progreso</option>
-            <option value="completed">Completada</option>
-          </select>
+            required
+          />
           <input
             type="text"
-            placeholder="Asignar a (UUID opcional)"
-            value={assignedTo}
-            onChange={(e) => setAssignedTo(e.target.value)}
+            placeholder="Usuario ID"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
             className="w-full border rounded px-3 py-2"
+            required
           />
           <div className="flex justify-end gap-2">
             <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">

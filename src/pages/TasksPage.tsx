@@ -25,13 +25,8 @@ export default function TasksPage() {
     setSelected(new Set());
   };
 
-  const statusLabel = (s?: string) => {
-    switch (s) {
-      case 'pending': return 'Pendiente';
-      case 'in_progress': return 'En progreso';
-      case 'completed': return 'Completada';
-      default: return s || '-';
-    }
+  const formatDate = (d: string) => {
+    return new Date(d).toLocaleDateString('es-ES');
   };
 
   return (
@@ -72,10 +67,10 @@ export default function TasksPage() {
                     }}
                   />
                 </th>
-                <th className="px-4 py-3 text-left">Título</th>
-                <th className="px-4 py-3 text-left">Descripción</th>
-                <th className="px-4 py-3 text-left">Estado</th>
-                <th className="px-4 py-3 text-left">Asignado a</th>
+                <th className="px-4 py-3 text-left">Nombre</th>
+                <th className="px-4 py-3 text-left">Fecha Inicio</th>
+                <th className="px-4 py-3 text-left">Horas Estimadas</th>
+                <th className="px-4 py-3 text-left">Usuario ID</th>
                 <th className="px-4 py-3 text-left">Acciones</th>
               </tr>
             </thead>
@@ -89,14 +84,10 @@ export default function TasksPage() {
                       onChange={() => toggleSelect(task.id)}
                     />
                   </td>
-                  <td className="px-4 py-3 font-medium">{task.title}</td>
-                  <td className="px-4 py-3 text-gray-600">{task.description || '-'}</td>
-                  <td className="px-4 py-3">
-                    <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                      {statusLabel(task.status)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{task.assignedTo || '-'}</td>
+                  <td className="px-4 py-3 font-medium">{task.nombre}</td>
+                  <td className="px-4 py-3 text-gray-600">{formatDate(task.fechaInicio)}</td>
+                  <td className="px-4 py-3 text-gray-600">{task.horasEstimadas}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500">{task.userId}</td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => deleteTask(task.id)}

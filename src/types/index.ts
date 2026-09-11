@@ -21,10 +21,11 @@ export interface Role {
 
 export interface Task {
   id: string;
-  title: string;
-  description?: string;
-  status?: string;
-  assignedTo?: string;
+  nombre: string;
+  fechaInicio: string;
+  horasEstimadas: number;
+  userId: string;
+  createdAt: string;
 }
 
 export interface LoginRequest {
