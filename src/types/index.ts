@@ -16,6 +16,7 @@ export interface Camera {
 export interface Role {
   id: string;
   name: string;
+  nombre: string;
 }
 
 export interface Task {

@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import type { Role } from '../types';
 
 interface Props {
   onClose: () => void;
   onSubmit: (user: { email: string; password: string; name: string; roleId: string }) => void;
+  roles: Role[];
 }
 
-export default function UserModal({ onClose, onSubmit }: Props) {
+export default function UserModal({ onClose, onSubmit, roles }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -46,14 +48,19 @@ export default function UserModal({ onClose, onSubmit }: Props) {
             className="w-full border rounded px-3 py-2"
             required
           />
-          <input
-            type="text"
-            placeholder="Role ID (UUID)"
+          <select
             value={roleId}
             onChange={(e) => setRoleId(e.target.value)}
             className="w-full border rounded px-3 py-2"
             required
-          />
+          >
+            <option value="">Seleccionar rol</option>
+            {roles.map((role) => (
+              <option key={role.id} value={role.id}>
+                {role.nombre}
+              </option>
+            ))}
+          </select>
           <div className="flex justify-end gap-2">
             <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">
               Cancelar

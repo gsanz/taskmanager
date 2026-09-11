@@ -1,11 +1,11 @@
 server {
-    listen 80;
+    listen $VITE_NGINX_PORT;
     server_name localhost;
     root /usr/share/nginx/html;
     index index.html;
 
     location /api {
-        proxy_pass http://backend:4000;
+        proxy_pass http://backend:$VITE_BACKEND_PORT;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';

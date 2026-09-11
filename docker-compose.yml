@@ -2,11 +2,16 @@ services:
   frontend:
     build: .
     ports:
-      - "80:80"
+      - "${VITE_NGINX_PORT:-80}:${VITE_NGINX_PORT:-80}"
     depends_on:
       - backend
+    environment:
+      - VITE_BACKEND_PORT=${VITE_BACKEND_PORT:-4000}
+      - VITE_NGINX_PORT=${VITE_NGINX_PORT:-80}
 
   backend:
     image: backend:latest
     ports:
-      - "4000:4000"
+      - "${VITE_DOCKER_BACKEND_PORT:-4000}:${VITE_DOCKER_BACKEND_PORT:-4000}"
+    environment:
+      - PORT=${VITE_BACKEND_PORT:-4000}

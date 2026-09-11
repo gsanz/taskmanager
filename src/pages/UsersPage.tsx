@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useUsers } from '../hooks/useUsers';
+import { useRoles } from '../hooks/useRoles';
 import UserModal from '../components/UserModal';
 
 export default function UsersPage() {
   const { users, total, page, setPage, loading, createUser, deleteUser, deleteMultipleUsers } = useUsers();
+  const { roles } = useRoles();
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -111,7 +113,7 @@ export default function UsersPage() {
         </div>
       )}
 
-      {showModal && <UserModal onClose={() => setShowModal(false)} onSubmit={createUser} />}
+      {showModal && <UserModal onClose={() => setShowModal(false)} onSubmit={createUser} roles={roles} />}
     </div>
   );
 }
