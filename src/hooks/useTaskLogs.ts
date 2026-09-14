@@ -10,7 +10,7 @@ export function useTaskLogs() {
     setLoading(true);
     try {
       const { data } = await client.get(`/task-logs/day?fecha=${date}`);
-      setTaskLogs(data || []);
+      setTaskLogs(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching task logs', err);
       setTaskLogs([]);

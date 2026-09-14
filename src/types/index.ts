@@ -8,10 +8,13 @@ export interface User {
 export interface TaskLog {
   id: string;
   tareaId: string;
+  tareaNombre: string;
   fecha: string;
   descripcion: string;
   horas: number;
   userId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Role {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import client from '../api/client';
+import { useAuth } from '../hooks/useAuth';
 import type { Task } from '../types';
 
 export function useTasks() {
@@ -8,11 +9,16 @@ export function useTasks() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const limit = 10;
+  const { currentUser, isAdmin } = useAuth();
 
   const fetchTasks = useCallback(async (p = page) => {
     setLoading(true);
     try {
-      const { data } = await client.get(`/tasks?page=${p}&limit=${limit}`);
+      const params: Record<string, string | number> = { page: p, limit };
+      if (!isAdmin && currentUser?.id) {
+        params.userId = currentUser.id;
+      }
+      const { data } = await client.get('/tasks', { params });
       setTasks(data.data || data);
       setTotal(data.total || 0);
     } catch (err) {
@@ -20,12 +26,13 @@ export function useTasks() {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, isAdmin, currentUser]);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   const createTask = async (task: { nombre: string; fechaInicio: string; horasEstimadas: number; userId: string }) => {
-    await client.post('/tasks', task);
+    const finalUserId = !isAdmin && currentUser?.id ? currentUser.id : task.userId;
+    await client.post('/tasks', { ...task, userId: finalUserId });
     fetchTasks();
   };
 

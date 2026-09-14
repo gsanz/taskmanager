@@ -1,15 +1,31 @@
-import { useState } from 'react';
-import { useTasks } from '../hooks/useTasks';
-import { useUsers } from '../hooks/useUsers';
-import TaskModal from '../components/TaskModal';
+import { useState } from "react";
+import { useTasks } from "../hooks/useTasks";
+import { useUsers } from "../hooks/useUsers";
+import { useAuth } from "../hooks/useAuth";
+import TaskModal from "../components/TaskModal";
 
 export default function TasksPage() {
-  const { tasks, total, page, setPage, loading, createTask, deleteTask, deleteMultipleTasks } = useTasks();
-  const { users } = useUsers();
+  const {
+    tasks,
+    total,
+    page,
+    setPage,
+    loading,
+    createTask,
+    deleteTask,
+    deleteMultipleTasks,
+  } = useTasks();
+  const { users } = useUsers(true);
+  const { currentUser, isAdmin } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const userMap = new Map(users.map((u) => [u.id, u.name]));
+
+  const getUserName = (userId: string) => {
+    if (userId === currentUser?.id && currentUser.name) return currentUser.name;
+    return userMap.get(userId) || "Usuario no disponible";
+  };
 
   const totalPages = Math.ceil(total / 10);
 
@@ -30,7 +46,7 @@ export default function TasksPage() {
   };
 
   const formatDate = (d: string) => {
-    return new Date(d).toLocaleDateString('es-ES');
+    return new Date(d).toLocaleDateString("es-ES");
   };
 
   return (
@@ -66,7 +82,8 @@ export default function TasksPage() {
                   <input
                     type="checkbox"
                     onChange={(e) => {
-                      if (e.target.checked) setSelected(new Set(tasks.map((t) => t.id)));
+                      if (e.target.checked)
+                        setSelected(new Set(tasks.map((t) => t.id)));
                       else setSelected(new Set());
                     }}
                   />
@@ -89,9 +106,15 @@ export default function TasksPage() {
                     />
                   </td>
                   <td className="px-4 py-3 font-medium">{task.nombre}</td>
-                  <td className="px-4 py-3 text-gray-600">{formatDate(task.fechaInicio)}</td>
-                  <td className="px-4 py-3 text-gray-600">{task.horasEstimadas}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{userMap.get(task.userId) || task.userId}</td>
+                  <td className="px-4 py-3 text-gray-600">
+                    {formatDate(task.fechaInicio)}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600">
+                    {task.horasEstimadas}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-500">
+                    {getUserName(task.userId)}
+                  </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => deleteTask(task.id)}
@@ -113,7 +136,7 @@ export default function TasksPage() {
             <button
               key={i}
               onClick={() => setPage(i + 1)}
-              className={`px-3 py-1 rounded ${page === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+              className={`px-3 py-1 rounded ${page === i + 1 ? "bg-blue-600 text-white" : "bg-gray-200"}`}
             >
               {i + 1}
             </button>
@@ -121,7 +144,14 @@ export default function TasksPage() {
         </div>
       )}
 
-      {showModal && <TaskModal onClose={() => setShowModal(false)} onSubmit={createTask} users={users} />}
+      {showModal && (
+        <TaskModal
+          onClose={() => setShowModal(false)}
+          onSubmit={createTask}
+          users={users}
+          isAdmin={isAdmin}
+        />
+      )}
     </div>
   );
 }
