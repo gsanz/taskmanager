@@ -8,7 +8,9 @@ const client = axios.create({
 });
 
 client.interceptors.request.use((config) => {
+  console.log("BEFORE OBTAIN TOKEN");
   const token = localStorage.getItem("token");
+  console.log("AFTER OBTAIN TOKEN", token);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -20,7 +22,7 @@ client.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem("token");
-      window.location.href = "/login";
+      window.location.replace("/login");
     }
     return Promise.reject(err);
   },
