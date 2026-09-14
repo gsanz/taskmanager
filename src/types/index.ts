@@ -5,14 +5,6 @@ export interface User {
   roleId: string;
 }
 
-export interface Camera {
-  id: string;
-  name: string;
-  ip: string;
-  location?: string;
-  description?: string;
-}
-
 export interface Role {
   id: string;
   name: string;

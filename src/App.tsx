@@ -6,7 +6,6 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import UsersPage from './pages/UsersPage';
 import TasksPage from './pages/TasksPage';
-import CamerasPage from './pages/CamerasPage';
 import RolesPage from './pages/RolesPage';
 
 export default function App() {
@@ -25,7 +24,6 @@ export default function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="/tasks" element={<TasksPage />} />
-            <Route path="/cameras" element={<CamerasPage />} />
             <Route path="/roles" element={<RolesPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

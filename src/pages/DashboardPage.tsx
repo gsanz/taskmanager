@@ -19,14 +19,8 @@ export default function DashboardPage() {
           <h2 className="text-xl font-semibold mb-2">Tareas</h2>
           <p className="text-gray-600">Gestionar tareas del sistema</p>
         </Link>
-        <Link
-          to="/cameras"
-          className="block p-6 bg-white rounded-lg shadow hover:shadow-md transition"
-        >
-          <h2 className="text-xl font-semibold mb-2">Cámaras</h2>
-          <p className="text-gray-600">Gestionar cámaras del sistema</p>
-        </Link>
-        <Link
+
+<Link
           to="/roles"
           className="block p-6 bg-white rounded-lg shadow hover:shadow-md transition"
         >
