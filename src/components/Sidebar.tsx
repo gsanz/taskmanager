@@ -39,8 +39,15 @@ export default function Sidebar() {
         >
           Tareas
         </NavLink>
-
-          <NavLink
+        <NavLink
+          to="/task-logs"
+          className={({ isActive }) =>
+            `block px-4 py-2 rounded transition ${isActive ? 'bg-blue-600' : 'hover:bg-gray-700'}`
+          }
+        >
+          Registro de Tareas
+        </NavLink>
+        <NavLink
           to="/roles"
           className={({ isActive }) =>
             `block px-4 py-2 rounded transition ${isActive ? 'bg-blue-600' : 'hover:bg-gray-700'}`

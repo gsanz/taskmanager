@@ -5,6 +5,15 @@ export interface User {
   roleId: string;
 }
 
+export interface TaskLog {
+  id: string;
+  tareaId: string;
+  fecha: string;
+  descripcion: string;
+  horas: number;
+  userId: string;
+}
+
 export interface Role {
   id: string;
   name: string;

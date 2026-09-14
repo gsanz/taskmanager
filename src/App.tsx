@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import UsersPage from './pages/UsersPage';
 import TasksPage from './pages/TasksPage';
 import RolesPage from './pages/RolesPage';
+import TaskLogsPage from './pages/TaskLogsPage';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/users" element={<UsersPage />} />
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/roles" element={<RolesPage />} />
+            <Route path="/task-logs" element={<TaskLogsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
