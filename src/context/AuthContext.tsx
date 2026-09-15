@@ -23,12 +23,23 @@ function normaliseUser(value: unknown): UserInfo | null {
   const user = nested as Record<string, unknown>;
   const id = (user.id || user.userId || user.sub) as string | undefined;
   if (!id) return null;
+  const role = user.role;
+  const roleObject =
+    role && typeof role === "object"
+      ? (role as Record<string, unknown>)
+      : null;
+  const roleName =
+    (user.roleName as string) ||
+    (user.roleNombre as string) ||
+    (roleObject?.nombre as string) ||
+    (roleObject?.name as string) ||
+    (typeof role === "string" ? role : "");
   return {
     id,
     email: (user.email as string) || "",
     name: ((user.name || user.nombre) as string) || "",
     roleId: ((user.roleId || user.role) as string) || "",
-    roleName: ((user.roleName || user.roleNombre || user.role) as string) || "",
+    roleName,
   };
 }
 

@@ -1,11 +1,23 @@
 import { useState } from 'react';
 import { useRoles } from '../hooks/useRoles';
+import { useAuth } from '../hooks/useAuth';
 import RoleModal from '../components/RoleModal';
 
 export default function RolesPage() {
   const { roles, total, page, setPage, loading, createRole, deleteRole, deleteMultipleRoles } = useRoles();
+  const { currentUser } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const roleMap = new Map(roles.map((role) => [role.id, role.nombre || role.name]));
+  const currentRole = (
+    currentUser?.roleName || roleMap.get(currentUser?.roleId || "") || ""
+  )
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const canCreateRoles =
+    currentRole === "administrador" || currentRole === "manager";
 
   const totalPages = Math.ceil(total / 10);
 
@@ -38,12 +50,14 @@ export default function RolesPage() {
               Eliminar ({selected.size})
             </button>
           )}
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            + Nuevo Rol
-          </button>
+          {canCreateRoles && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              + Nuevo Rol
+            </button>
+          )}
         </div>
       </div>
 

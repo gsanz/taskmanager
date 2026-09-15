@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useUsers } from "../hooks/useUsers";
 import { useRoles } from "../hooks/useRoles";
+import { useAuth } from "../hooks/useAuth";
 import UserModal from "../components/UserModal";
 
 export default function UsersPage() {
-  console.log("BEFORE ALL THE USERS");
   const {
     users,
     total,
@@ -16,7 +16,16 @@ export default function UsersPage() {
     deleteMultipleUsers,
   } = useUsers();
   const { roles } = useRoles();
+  const { currentUser } = useAuth();
   const roleMap = new Map(roles.map((r) => [r.id, r.nombre]));
+  const currentRole = (
+    currentUser?.roleName || roleMap.get(currentUser?.roleId || "") || ""
+  )
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const canCreateUsers =
+    currentRole === "administrador" || currentRole === "manager";
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -51,12 +60,14 @@ export default function UsersPage() {
               Eliminar ({selected.size})
             </button>
           )}
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            + Nuevo Usuario
-          </button>
+          {canCreateUsers && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              + Nuevo Usuario
+            </button>
+          )}
         </div>
       </div>
 
