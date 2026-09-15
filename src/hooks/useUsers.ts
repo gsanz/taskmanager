@@ -7,22 +7,48 @@ export function useUsers(loadAll = false) {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const limit = loadAll ? 1000 : 10;
+  const limit = 10;
 
   const fetchUsers = useCallback(
     async (p = page) => {
       setLoading(true);
       try {
         const { data } = await client.get(`/users?page=${p}&limit=${limit}`);
-        setUsers(data.data || data);
-        setTotal(data.total || 0);
+        const firstPage = Array.isArray(data) ? data : data.data || [];
+        const responseTotal = Array.isArray(data)
+          ? firstPage.length
+          : data.total || firstPage.length;
+
+        if (!loadAll || firstPage.length === 0 || firstPage.length >= responseTotal) {
+          setUsers(firstPage);
+          setTotal(responseTotal);
+          return;
+        }
+
+        const responseLimit = Array.isArray(data)
+          ? limit
+          : data.limit || firstPage.length;
+        const totalPages = Math.ceil(responseTotal / responseLimit);
+        const remainingPages = await Promise.all(
+          Array.from({ length: totalPages - 1 }, (_, index) =>
+            client.get(`/users?page=${index + 2}&limit=${responseLimit}`),
+          ),
+        );
+        const allUsers = [
+          ...firstPage,
+          ...remainingPages.flatMap(({ data: pageData }) =>
+            Array.isArray(pageData) ? pageData : pageData.data || [],
+          ),
+        ];
+        setUsers(allUsers);
+        setTotal(responseTotal);
       } catch (err) {
         console.error("Error fetching users", err);
       } finally {
         setLoading(false);
       }
     },
-    [page],
+    [loadAll, page],
   );
 
   useEffect(() => {

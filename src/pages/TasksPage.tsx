@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTasks } from "../hooks/useTasks";
 import { useUsers } from "../hooks/useUsers";
+import { useRoles } from "../hooks/useRoles";
 import { useAuth } from "../hooks/useAuth";
 import TaskModal from "../components/TaskModal";
 
@@ -15,7 +16,8 @@ export default function TasksPage() {
     deleteTask,
     deleteMultipleTasks,
   } = useTasks();
-  const { users, getUserById } = useUsers(true);
+  const { users, getUserById, loading: usersLoading } = useUsers(true);
+  const { roles } = useRoles();
   const { currentUser, isAdmin } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -180,6 +182,8 @@ export default function TasksPage() {
           onClose={() => setShowModal(false)}
           onSubmit={createTask}
           users={users}
+          usersLoading={usersLoading}
+          roles={roles}
           isAdmin={isAdmin}
         />
       )}

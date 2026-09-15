@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
-import type { User } from "../types";
+import type { Role, User } from "../types";
 
 interface Props {
   onClose: () => void;
@@ -11,6 +11,8 @@ interface Props {
     userId: string;
   }) => void;
   users: User[];
+  usersLoading: boolean;
+  roles: Role[];
   isAdmin: boolean;
 }
 
@@ -18,6 +20,8 @@ export default function TaskModal({
   onClose,
   onSubmit,
   users,
+  usersLoading,
+  roles,
   isAdmin,
 }: Props) {
   const [nombre, setNombre] = useState("");
@@ -26,9 +30,31 @@ export default function TaskModal({
   const [userId, setUserId] = useState("");
   const { currentUser } = useAuth();
 
+  const normaliseRole = (role: string) =>
+    role
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  const roleNames = new Map(
+    roles.map((role) => [role.id, role.nombre || role.name]),
+  );
+  const currentRole = normaliseRole(
+    currentUser?.roleName || roleNames.get(currentUser?.roleId || "") || "",
+  );
+  const isManager = currentRole === "manager";
+  const canAssignUsers = isAdmin || isManager;
+  const assignableUsers = isAdmin
+    ? users
+    : isManager
+      ? users.filter(
+          (user) =>
+            normaliseRole(roleNames.get(user.roleId) || "") === "tecnico",
+        )
+      : [];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalUserId = !isAdmin && currentUser?.id ? currentUser.id : userId;
+    const finalUserId = canAssignUsers && userId ? userId : currentUser?.id || "";
     onSubmit({
       nombre,
       fechaInicio,
@@ -83,7 +109,7 @@ export default function TaskModal({
               required
             />
           </label>
-          {isAdmin ? (
+          {canAssignUsers ? (
             <label className="block">
               <span className="block text-sm font-medium text-gray-700 mb-1">
                 Nombre del usuario
@@ -91,11 +117,14 @@ export default function TaskModal({
               <select
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
+                disabled={usersLoading}
                 className="w-full border rounded px-3 py-2"
                 required
               >
-                <option value="">Selecciona un usuario</option>
-                {users.map((u) => (
+                <option value="">
+                  {usersLoading ? "Cargando usuarios..." : "Selecciona un usuario"}
+                </option>
+                {!usersLoading && assignableUsers.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.name}
                   </option>

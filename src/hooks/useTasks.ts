@@ -31,7 +31,7 @@ export function useTasks() {
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   const createTask = async (task: { nombre: string; fechaInicio: string; horasEstimadas: number; userId: string }) => {
-    const finalUserId = !isAdmin && currentUser?.id ? currentUser.id : task.userId;
+    const finalUserId = task.userId || currentUser?.id || "";
     await client.post('/tasks', { ...task, userId: finalUserId });
     fetchTasks();
   };
