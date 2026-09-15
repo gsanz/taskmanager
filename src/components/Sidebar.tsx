@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Sidebar() {
-  const { logout } = useAuth();
+  const { logout, currentUser } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -13,6 +13,14 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-gray-900 text-white min-h-screen p-4 flex flex-col">
       <h1 className="text-xl font-bold mb-8 text-center">TRAGSA</h1>
+      {currentUser && (
+        <div className="mb-6 border-b border-gray-700 pb-4 text-center">
+          <p className="text-xs text-gray-400">Usuario</p>
+          <p className="font-semibold truncate" title={currentUser.name}>
+            {currentUser.name || currentUser.email}
+          </p>
+        </div>
+      )}
       <nav className="flex-1 space-y-2">
         <NavLink
           to="/"

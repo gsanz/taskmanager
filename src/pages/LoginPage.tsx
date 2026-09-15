@@ -18,7 +18,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { data } = await client.post<LoginResponse>('/auth/login', { email, password });
-      login(data.access_token);
+      await login(data.access_token);
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al iniciar sesión');
