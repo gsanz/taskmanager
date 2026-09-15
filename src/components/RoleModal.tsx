@@ -2,15 +2,15 @@ import { useState } from 'react';
 
 interface Props {
   onClose: () => void;
-  onSubmit: (role: { name: string }) => void;
+  onSubmit: (role: { nombre: string }) => void;
 }
 
 export default function RoleModal({ onClose, onSubmit }: Props) {
-  const [name, setName] = useState('');
+  const [nombre, setNombre] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ name });
+    onSubmit({ nombre });
     onClose();
   };
 
@@ -22,8 +22,8 @@ export default function RoleModal({ onClose, onSubmit }: Props) {
           <input
             type="text"
             placeholder="Nombre del rol"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
             className="w-full border rounded px-3 py-2"
             required
           />

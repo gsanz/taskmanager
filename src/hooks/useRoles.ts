@@ -24,7 +24,7 @@ export function useRoles() {
 
   useEffect(() => { fetchRoles(); }, [fetchRoles]);
 
-  const createRole = async (role: { name: string }) => {
+  const createRole = async (role: { nombre: string }) => {
     await client.post('/roles', role);
     fetchRoles();
   };

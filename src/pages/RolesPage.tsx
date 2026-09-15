@@ -77,7 +77,9 @@ export default function RolesPage() {
                       onChange={() => toggleSelect(role.id)}
                     />
                   </td>
-                  <td className="px-4 py-3 font-medium">{role.name}</td>
+                  <td className="px-4 py-3 font-medium">
+                    {role.nombre || role.name}
+                  </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => deleteRole(role.id)}
