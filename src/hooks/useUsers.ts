@@ -59,9 +59,24 @@ export function useUsers(loadAll = false) {
     email: string;
     password: string;
     name: string;
+    secondname: string;
     roleId: string;
   }) => {
     await client.post("/users", user);
+    fetchUsers();
+  };
+
+  const updateUser = async (
+    id: string,
+    user: {
+      email?: string;
+      password?: string;
+      name?: string;
+      secondname?: string;
+      roleId?: string;
+    },
+  ) => {
+    await client.patch(`/users/${id}`, user);
     fetchUsers();
   };
 
@@ -87,6 +102,7 @@ export function useUsers(loadAll = false) {
     setPage,
     loading,
     createUser,
+    updateUser,
     deleteUser,
     deleteMultipleUsers,
     getUserById,

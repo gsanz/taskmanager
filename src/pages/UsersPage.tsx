@@ -12,6 +12,7 @@ export default function UsersPage() {
     setPage,
     loading,
     createUser,
+    updateUser,
     deleteUser,
     deleteMultipleUsers,
   } = useUsers();
@@ -27,6 +28,7 @@ export default function UsersPage() {
   const canCreateUsers =
     currentRole === "administrador" || currentRole === "manager";
   const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<typeof users[number] | undefined>();
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const totalPages = Math.ceil(total / 10);
@@ -47,6 +49,16 @@ export default function UsersPage() {
     setSelected(new Set());
   };
 
+  const openCreateModal = () => {
+    setEditingUser(undefined);
+    setShowModal(true);
+  };
+
+  const openEditModal = (user: typeof users[number]) => {
+    setEditingUser(user);
+    setShowModal(true);
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -62,7 +74,7 @@ export default function UsersPage() {
           )}
           {canCreateUsers && (
             <button
-              onClick={() => setShowModal(true)}
+              onClick={openCreateModal}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
               + Nuevo Usuario
@@ -89,6 +101,7 @@ export default function UsersPage() {
                   />
                 </th>
                 <th className="px-4 py-3 text-left">Nombre</th>
+                <th className="px-4 py-3 text-left">Segundo nombre</th>
                 <th className="px-4 py-3 text-left">Email</th>
                 <th className="px-4 py-3 text-left">Rol</th>
                 <th className="px-4 py-3 text-left">Acciones</th>
@@ -105,11 +118,20 @@ export default function UsersPage() {
                     />
                   </td>
                   <td className="px-4 py-3">{user.name}</td>
+                  <td className="px-4 py-3">{user.secondname || "-"}</td>
                   <td className="px-4 py-3">{user.email}</td>
                   <td className="px-4 py-3 text-sm text-gray-500">
                     {roleMap.get(user.roleId) || user.roleId}
                   </td>
                   <td className="px-4 py-3">
+                    {canCreateUsers && (
+                      <button
+                        onClick={() => openEditModal(user)}
+                        className="text-blue-600 hover:text-blue-800 mr-3"
+                      >
+                        Modificar
+                      </button>
+                    )}
                     <button
                       onClick={() => deleteUser(user.id)}
                       className="text-red-600 hover:text-red-800"
@@ -140,9 +162,19 @@ export default function UsersPage() {
 
       {showModal && (
         <UserModal
-          onClose={() => setShowModal(false)}
-          onSubmit={createUser}
+          onClose={() => {
+            setShowModal(false);
+            setEditingUser(undefined);
+          }}
+          onSubmit={(user) => {
+            if (editingUser) {
+              updateUser(editingUser.id, user);
+            } else {
+              createUser(user as Parameters<typeof createUser>[0]);
+            }
+          }}
           roles={roles}
+          user={editingUser}
         />
       )}
     </div>
