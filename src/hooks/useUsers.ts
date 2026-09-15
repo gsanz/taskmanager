@@ -49,6 +49,11 @@ export function useUsers(loadAll = false) {
     fetchUsers();
   };
 
+  const getUserById = useCallback(async (id: string) => {
+    const { data } = await client.get<User>(`/users/${id}`);
+    return data;
+  }, []);
+
   return {
     users,
     total,
@@ -58,6 +63,7 @@ export function useUsers(loadAll = false) {
     createUser,
     deleteUser,
     deleteMultipleUsers,
+    getUserById,
     refetch: fetchUsers,
   };
 }

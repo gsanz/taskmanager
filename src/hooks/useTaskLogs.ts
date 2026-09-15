@@ -18,8 +18,8 @@ export function useTaskLogs() {
       setLoading(false);
     }
   }, []);
-
   const createTaskLog = useCallback(async (taskLog: { tareaId: string; fecha: string; descripcion: string; horas: number }) => {
+    console.log(taskLog);
     const { data } = await client.post('/task-logs', taskLog);
     return data;
   }, []);

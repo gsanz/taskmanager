@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTasks } from "../hooks/useTasks";
 import { useUsers } from "../hooks/useUsers";
 import { useAuth } from "../hooks/useAuth";
@@ -15,16 +15,47 @@ export default function TasksPage() {
     deleteTask,
     deleteMultipleTasks,
   } = useTasks();
-  const { users } = useUsers(true);
+  const { users, getUserById } = useUsers(true);
   const { currentUser, isAdmin } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [taskUserNames, setTaskUserNames] = useState<Record<string, string>>(
+    {},
+  );
 
   const userMap = new Map(users.map((u) => [u.id, u.name]));
 
+  useEffect(() => {
+    const userIds = Array.from(new Set(tasks.map((task) => task.userId))).filter(
+      (userId) => userId && !userMap.has(userId),
+    );
+    if (userIds.length === 0) return;
+
+    let cancelled = false;
+    Promise.all(
+      userIds.map(async (userId) => {
+        try {
+          const user = await getUserById(userId);
+          return [userId, user.name] as const;
+        } catch (err) {
+          console.error(`Error fetching user ${userId}`, err);
+          return [userId, "Usuario no disponible"] as const;
+        }
+      }),
+    ).then((entries) => {
+      if (!cancelled) {
+        setTaskUserNames((names) => ({ ...names, ...Object.fromEntries(entries) }));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getUserById, tasks, users]);
+
   const getUserName = (userId: string) => {
     if (userId === currentUser?.id && currentUser.name) return currentUser.name;
-    return userMap.get(userId) || "Usuario no disponible";
+    return userMap.get(userId) || taskUserNames[userId] || "Cargando...";
   };
 
   const totalPages = Math.ceil(total / 10);

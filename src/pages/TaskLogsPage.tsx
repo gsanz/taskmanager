@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
 import { useTasks } from "../hooks/useTasks";
 import { useTaskLogs } from "../hooks/useTaskLogs";
+import { useUsers } from "../hooks/useUsers";
+import { useAuth } from "../hooks/useAuth";
 import {
   format,
   startOfMonth,
@@ -16,6 +18,8 @@ import { es } from "date-fns/locale";
 
 export default function TaskLogsPage() {
   const { tasks } = useTasks();
+  const { currentUser, isAdmin } = useAuth();
+  const { getUserById } = useUsers();
   const {
     taskLogs,
     loading: logsLoading,
@@ -29,7 +33,48 @@ export default function TaskLogsPage() {
   const [modalTaskId, setModalTaskId] = useState("");
   const [modalDescripcion, setModalDescripcion] = useState("");
   const [modalHoras, setModalHoras] = useState("");
+  const [modalErrors, setModalErrors] = useState({
+    task: false,
+    descripcion: false,
+    horas: false,
+  });
   const [submitting, setSubmitting] = useState(false);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
+
+  const visibleTasks = isAdmin
+    ? currentUser?.id
+      ? tasks.filter((task) => task.userId === currentUser.id)
+      : []
+    : tasks;
+
+  useEffect(() => {
+    const userIds = Array.from(
+      new Set([
+        ...tasks.map((task) => task.userId),
+        ...taskLogs.map((log) => log.userId),
+      ].filter(Boolean)),
+    );
+    if (userIds.length === 0) return;
+
+    let cancelled = false;
+    Promise.all(
+      userIds.map(async (userId) => {
+        try {
+          const user = await getUserById(userId);
+          return [userId, user.name] as const;
+        } catch (err) {
+          console.error(`Error fetching user ${userId}`, err);
+          return [userId, "Usuario no disponible"] as const;
+        }
+      }),
+    ).then((entries) => {
+      if (!cancelled) setUserNames((names) => ({ ...names, ...Object.fromEntries(entries) }));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getUserById, taskLogs, tasks]);
 
   const days = eachDayOfInterval({
     start: startOfMonth(currentDate),
@@ -53,13 +98,29 @@ export default function TaskLogsPage() {
       setModalTaskId("");
       setModalDescripcion("");
       setModalHoras("");
+      setModalErrors({ task: false, descripcion: false, horas: false });
       await fetchTaskLogsByDay(format(nextDay, "yyyy-MM-dd"));
     },
     [fetchTaskLogsByDay],
   );
 
   const handleModalSubmit = async () => {
-    if (!selectedDay || !displayedDay || !modalTaskId) return;
+    const errors = {
+      task: !modalTaskId,
+      descripcion: !modalDescripcion.trim(),
+      horas: !modalHoras.trim(),
+    };
+    setModalErrors(errors);
+
+    if (
+      !selectedDay ||
+      !displayedDay ||
+      errors.task ||
+      errors.descripcion ||
+      errors.horas
+    )
+      return;
+
     setSubmitting(true);
     try {
       await createTaskLog({
@@ -82,6 +143,7 @@ export default function TaskLogsPage() {
     setModalTaskId("");
     setModalDescripcion("");
     setModalHoras("");
+    setModalErrors({ task: false, descripcion: false, horas: false });
   };
 
   return (
@@ -169,6 +231,9 @@ export default function TaskLogsPage() {
                   {taskLogs.map((log) => (
                     <div key={log.id} className="p-3 bg-gray-50 rounded border">
                       <div className="font-medium">{log.tareaNombre}</div>
+                      <div className="text-sm text-gray-600">
+                        Usuario: {userNames[log.userId] || "Cargando..."}
+                      </div>
                       <div className="text-sm text-gray-500">
                         {log.descripcion}
                       </div>
@@ -194,42 +259,79 @@ export default function TaskLogsPage() {
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Tarea</label>
+                <label
+                  className={`block text-sm font-medium mb-1 ${modalErrors.task ? "text-red-600" : ""}`}
+                >
+                  Tarea {modalErrors.task && "(Seleccionar Tarea)"}
+                </label>
                 <select
                   value={modalTaskId}
-                  onChange={(event) => setModalTaskId(event.target.value)}
+                  onChange={(event) => {
+                    setModalTaskId(event.target.value);
+                    setModalErrors((errors) => ({ ...errors, task: false }));
+                  }}
                   className="w-full border rounded px-3 py-2"
                 >
                   <option value="">Seleccionar tarea</option>
-                  {tasks.map((task) => (
+                  {visibleTasks.map((task) => (
                     <option key={task.id} value={task.id}>
-                      {task.nombre}
+                      {task.nombre} - Usuario: {userNames[task.userId] || "Cargando..."}
                     </option>
                   ))}
                 </select>
+                {modalErrors.task && (
+                  <p className="mt-1 text-sm text-red-600">
+                    Este campo es obligatorio.
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label
+                  className={`block text-sm font-medium mb-1 ${modalErrors.descripcion ? "text-red-600" : ""}`}
+                >
                   Descripción
                 </label>
                 <textarea
                   value={modalDescripcion}
-                  onChange={(event) => setModalDescripcion(event.target.value)}
+                  onChange={(event) => {
+                    setModalDescripcion(event.target.value);
+                    setModalErrors((errors) => ({
+                      ...errors,
+                      descripcion: false,
+                    }));
+                  }}
                   className="w-full border rounded px-3 py-2"
                   rows={3}
                   placeholder="Descripción de la tarea ejecutada"
                 />
+                {modalErrors.descripcion && (
+                  <p className="mt-1 text-sm text-red-600">
+                    Este campo es obligatorio.
+                  </p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Horas</label>
+                <label
+                  className={`block text-sm font-medium mb-1 ${modalErrors.horas ? "text-red-600" : ""}`}
+                >
+                  Horas
+                </label>
                 <input
                   type="number"
                   step="0.5"
                   value={modalHoras}
-                  onChange={(event) => setModalHoras(event.target.value)}
+                  onChange={(event) => {
+                    setModalHoras(event.target.value);
+                    setModalErrors((errors) => ({ ...errors, horas: false }));
+                  }}
                   className="w-full border rounded px-3 py-2"
                   placeholder="Horas"
                 />
+                {modalErrors.horas && (
+                  <p className="mt-1 text-sm text-red-600">
+                    Este campo es obligatorio.
+                  </p>
+                )}
               </div>
               <div className="flex justify-end gap-2">
                 <button
@@ -241,7 +343,7 @@ export default function TaskLogsPage() {
                 </button>
                 <button
                   onClick={handleModalSubmit}
-                  disabled={!modalTaskId || submitting}
+                  disabled={submitting}
                   className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-300"
                 >
                   {submitting ? "Guardando..." : "Aceptar"}
