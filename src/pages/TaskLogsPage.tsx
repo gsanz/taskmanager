@@ -647,16 +647,20 @@ export default function TaskLogsPage() {
                           <button
                             type="button"
                             onClick={() => openEditModal(log)}
-                            className="text-blue-600 hover:text-blue-800"
+                            aria-label="Modificar registro"
+                            title="Modificar registro"
+                            className="text-blue-600 hover:text-blue-800 text-lg leading-none"
                           >
-                            Modificar
+                            ✎
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDelete(log)}
-                            className="text-red-600 hover:text-red-800"
+                            aria-label="Eliminar registro"
+                            title="Eliminar registro"
+                            className="text-red-600 hover:text-red-800 text-lg leading-none"
                           >
-                            Eliminar
+                            🗑
                           </button>
                         </div>
                       </div>
