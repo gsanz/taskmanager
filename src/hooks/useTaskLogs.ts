@@ -1,34 +1,53 @@
-import { useState, useCallback } from 'react';
-import client from '../api/client';
-import type { TaskLog } from '../types';
+import { useState, useCallback } from "react";
+import client from "../api/client";
+import type { TaskLog } from "../types";
 
 export function useTaskLogs() {
   const [taskLogs, setTaskLogs] = useState<TaskLog[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchTaskLogsByDay = useCallback(async (date: string, userIds?: string[]) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ fecha: date });
-      if (userIds !== undefined) {
-        params.set('userId', userIds.join(','));
+  const fetchTaskLogsByDay = useCallback(
+    async (date: string, userIds?: string[]) => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ fecha: date });
+        if (userIds !== undefined) {
+          params.set("userId", userIds.join(","));
+        }
+        const { data } = await client.get(
+          `/task-logs/day?${params.toString()}`,
+        );
+        setTaskLogs(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Error fetching task logs", err);
+        setTaskLogs([]);
+      } finally {
+        setLoading(false);
       }
-      const { data } = await client.get(`/task-logs/day?${params.toString()}`);
-      setTaskLogs(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('Error fetching task logs', err);
-      setTaskLogs([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-  const createTaskLog = useCallback(async (taskLog: { tareaId: string; fecha: string; descripcion: string; horas: number }) => {
-    console.log(taskLog);
-    const { data } = await client.post('/task-logs', taskLog);
-    return data;
-  }, []);
+    },
+    [],
+  );
+  const createTaskLog = useCallback(
+    async (taskLog: {
+      tareaId: string;
+      fecha: string;
+      descripcion: string;
+      horas: number;
+    }) => {
+      console.log(taskLog);
+      const { data } = await client.post("/task-logs", taskLog);
+      return data;
+    },
+    [],
+  );
 
   const clearTaskLogs = useCallback(() => setTaskLogs([]), []);
 
-  return { taskLogs, loading, fetchTaskLogsByDay, createTaskLog, clearTaskLogs };
+  return {
+    taskLogs,
+    loading,
+    fetchTaskLogsByDay,
+    createTaskLog,
+    clearTaskLogs,
+  };
 }
