@@ -27,6 +27,13 @@ export default function DashboardPage() {
           <h2 className="text-xl font-semibold mb-2">Roles</h2>
           <p className="text-gray-600">Gestionar roles del sistema</p>
         </Link>
+        <Link
+          to="/task-logs"
+          className="block p-6 bg-white rounded-lg shadow hover:shadow-md transition"
+        >
+          <h2 className="text-xl font-semibold mb-2">Registro de Tareas</h2>
+          <p className="text-gray-600">Consultar registros de tareas</p>
+        </Link>
       </div>
     </div>
   );
