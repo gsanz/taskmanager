@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 export default function DashboardPage() {
   return (
@@ -20,7 +20,7 @@ export default function DashboardPage() {
           <p className="text-gray-600">Gestionar tareas del sistema</p>
         </Link>
 
-<Link
+        <Link
           to="/roles"
           className="block p-6 bg-white rounded-lg shadow hover:shadow-md transition"
         >
