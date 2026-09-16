@@ -6,10 +6,14 @@ export function useTaskLogs() {
   const [taskLogs, setTaskLogs] = useState<TaskLog[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchTaskLogsByDay = useCallback(async (date: string) => {
+  const fetchTaskLogsByDay = useCallback(async (date: string, userIds?: string[]) => {
     setLoading(true);
     try {
-      const { data } = await client.get(`/task-logs/day?fecha=${date}`);
+      const params = new URLSearchParams({ fecha: date });
+      if (userIds !== undefined) {
+        params.set('userId', userIds.join(','));
+      }
+      const { data } = await client.get(`/task-logs/day?${params.toString()}`);
       setTaskLogs(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching task logs', err);
@@ -24,5 +28,7 @@ export function useTaskLogs() {
     return data;
   }, []);
 
-  return { taskLogs, loading, fetchTaskLogsByDay, createTaskLog };
+  const clearTaskLogs = useCallback(() => setTaskLogs([]), []);
+
+  return { taskLogs, loading, fetchTaskLogsByDay, createTaskLog, clearTaskLogs };
 }

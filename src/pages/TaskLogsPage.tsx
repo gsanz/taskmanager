@@ -38,6 +38,7 @@ export default function TaskLogsPage() {
     loading: logsLoading,
     fetchTaskLogsByDay,
     createTaskLog,
+    clearTaskLogs,
   } = useTaskLogs();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -67,6 +68,10 @@ export default function TaskLogsPage() {
   const [selectedExportUsers, setSelectedExportUsers] = useState<Set<string>>(
     new Set(),
   );
+  const [selectedTaskLogUsers, setSelectedTaskLogUsers] = useState<Set<string>>(
+    new Set(),
+  );
+  const [taskLogUserSearch, setTaskLogUserSearch] = useState("");
   const [exporting, setExporting] = useState(false);
 
   const currentRole = normaliseRole(
@@ -75,10 +80,13 @@ export default function TaskLogsPage() {
   const canExport = isAdmin || currentRole === "manager";
   const allExportUsersSelected =
     exportUsers.length > 0 && selectedExportUsers.size === exportUsers.length;
+  const allTaskLogUsersSelected =
+    exportUsers.length > 0 && selectedTaskLogUsers.size === exportUsers.length;
 
   useEffect(() => {
     if (exportUsers.length > 0) {
       setSelectedExportUsers(new Set(exportUsers.map((user) => user.id)));
+      setSelectedTaskLogUsers(new Set(exportUsers.map((user) => user.id)));
     }
   }, [exportUsers]);
 
@@ -96,6 +104,14 @@ export default function TaskLogsPage() {
     );
   });
 
+  const filteredTaskLogUsers = exportUsers.filter((user) => {
+    const search = taskLogUserSearch.trim().toLowerCase();
+    if (!search) return true;
+    return [user.name, user.secondname || ""].some((value) =>
+      value.toLowerCase().includes(search),
+    );
+  });
+
   const toggleExportUsers = () => {
     setSelectedExportUsers(
       allExportUsersSelected
@@ -106,6 +122,23 @@ export default function TaskLogsPage() {
 
   const toggleExportUser = (id: string) => {
     setSelectedExportUsers((selected) => {
+      const next = new Set(selected);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleTaskLogUsers = () => {
+    setSelectedTaskLogUsers(
+      allTaskLogUsersSelected
+        ? new Set()
+        : new Set(exportUsers.map((user) => user.id)),
+    );
+  };
+
+  const toggleTaskLogUser = (id: string) => {
+    setSelectedTaskLogUsers((selected) => {
       const next = new Set(selected);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -186,25 +219,43 @@ export default function TaskLogsPage() {
 
   useEffect(() => {
     const today = new Date();
-    const nextDay = addDays(today, 1);
     setSelectedDay(today);
-    setDisplayedDay(nextDay);
-    fetchTaskLogsByDay(format(nextDay, "yyyy-MM-dd"));
+    setDisplayedDay(today);
+    fetchTaskLogsByDay(format(today, "yyyy-MM-dd"));
   }, [fetchTaskLogsByDay]);
+
+  const fetchLogsForDay = useCallback(
+    (day: Date) => {
+      if (isAdmin && selectedTaskLogUsers.size === 0) {
+        clearTaskLogs();
+        return Promise.resolve();
+      }
+      return fetchTaskLogsByDay(
+        format(day, "yyyy-MM-dd"),
+        isAdmin ? Array.from(selectedTaskLogUsers) : undefined,
+      );
+    },
+    [clearTaskLogs, fetchTaskLogsByDay, isAdmin, selectedTaskLogUsers],
+  );
+
+  useEffect(() => {
+    if (isAdmin && selectedDay) {
+      fetchLogsForDay(selectedDay);
+    }
+  }, [fetchLogsForDay, isAdmin, selectedDay]);
 
   const handleDayClick = useCallback(
     async (day: Date) => {
-      const nextDay = addDays(day, 1);
       setSelectedDay(day);
-      setDisplayedDay(nextDay);
+      setDisplayedDay(day);
       setShowModal(false);
       setModalTaskId("");
       setModalDescripcion("");
       setModalHoras("");
       setModalErrors({ task: false, descripcion: false, horas: false });
-      await fetchTaskLogsByDay(format(nextDay, "yyyy-MM-dd"));
+      await fetchLogsForDay(day);
     },
-    [fetchTaskLogsByDay],
+    [fetchLogsForDay],
   );
 
   const handleModalSubmit = async () => {
@@ -232,7 +283,7 @@ export default function TaskLogsPage() {
         descripcion: modalDescripcion,
         horas: Number(modalHoras),
       });
-      await fetchTaskLogsByDay(format(displayedDay, "yyyy-MM-dd"));
+      await fetchLogsForDay(displayedDay);
       setShowModal(false);
     } catch (err) {
       console.error("Error creating task log", err);
@@ -466,6 +517,60 @@ export default function TaskLogsPage() {
         </div>
 
         <div className="w-96 bg-white border-l p-6 overflow-auto flex flex-col">
+          {isAdmin && (
+            <div className="mb-5">
+              <label
+                className="block text-sm font-medium mb-2"
+                htmlFor="task-log-user-search"
+              >
+                Filtrar por usuario
+              </label>
+              <input
+                id="task-log-user-search"
+                type="search"
+                value={taskLogUserSearch}
+                onChange={(event) => setTaskLogUserSearch(event.target.value)}
+                placeholder="Buscar por nombre o segundo nombre"
+                className="w-full border rounded px-3 py-2 mb-2"
+              />
+              <div className="border rounded max-h-48 overflow-auto p-2 space-y-1">
+                <label className="flex items-center gap-2 py-1 border-b mb-1">
+                  <input
+                    type="checkbox"
+                    checked={allTaskLogUsersSelected}
+                    onChange={toggleTaskLogUsers}
+                    disabled={usersLoading || exportUsers.length === 0}
+                  />
+                  Todos los usuarios
+                </label>
+                {usersLoading ? (
+                  <p className="text-sm text-gray-500">Cargando usuarios...</p>
+                ) : filteredTaskLogUsers.length === 0 ? (
+                  <p className="text-sm text-gray-500 py-1">
+                    No hay usuarios que coincidan con la búsqueda.
+                  </p>
+                ) : (
+                  filteredTaskLogUsers.map((user) => (
+                    <label
+                      key={user.id}
+                      className="flex items-center gap-2 py-1"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedTaskLogUsers.has(user.id)}
+                        onChange={() => toggleTaskLogUser(user.id)}
+                      />
+                      <span>
+                        {[user.name, user.secondname]
+                          .filter(Boolean)
+                          .join(" ") || "Sin nombre"}
+                      </span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
           <h2 className="text-xl font-bold mb-4">
             {displayedDay
               ? `Tareas para ${format(displayedDay, "dd/MM/yyyy")}`
