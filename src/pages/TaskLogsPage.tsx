@@ -387,9 +387,11 @@ export default function TaskLogsPage() {
                           checked={selectedExportUsers.has(user.id)}
                           onChange={() => toggleExportUser(user.id)}
                         />
-                        <span>{[user.name, user.secondname]
-                          .filter(Boolean)
-                          .join(" ") || "Sin nombre"}</span>
+                        <span>
+                          {[user.name, user.secondname]
+                            .filter(Boolean)
+                            .join(" ") || "Sin nombre"}
+                        </span>
                       </label>
                     ))
                   )}
