@@ -28,7 +28,11 @@ const normaliseRole = (role: string) =>
 export default function TaskLogsPage() {
   const { tasks } = useTasks();
   const { currentUser, isAdmin } = useAuth();
-  const { users: exportUsers, loading: usersLoading, getUserById } = useUsers(true);
+  const {
+    users: exportUsers,
+    loading: usersLoading,
+    getUserById,
+  } = useUsers(true);
   const {
     taskLogs,
     loading: logsLoading,
@@ -62,7 +66,9 @@ export default function TaskLogsPage() {
   );
   const [exporting, setExporting] = useState(false);
 
-  const currentRole = normaliseRole(currentUser?.roleName || currentUser?.roleId || "");
+  const currentRole = normaliseRole(
+    currentUser?.roleName || currentUser?.roleId || "",
+  );
   const canExport = isAdmin || currentRole === "manager";
   const allExportUsersSelected =
     exportUsers.length > 0 && selectedExportUsers.size === exportUsers.length;
@@ -96,7 +102,8 @@ export default function TaskLogsPage() {
   };
 
   const handleExport = async () => {
-    if (!exportStartDate || !exportEndDate || selectedExportUsers.size === 0) return;
+    if (!exportStartDate || !exportEndDate || selectedExportUsers.size === 0)
+      return;
 
     setExporting(true);
     try {
@@ -130,10 +137,12 @@ export default function TaskLogsPage() {
 
   useEffect(() => {
     const userIds = Array.from(
-      new Set([
-        ...tasks.map((task) => task.userId),
-        ...taskLogs.map((log) => log.userId),
-      ].filter(Boolean)),
+      new Set(
+        [
+          ...tasks.map((task) => task.userId),
+          ...taskLogs.map((log) => log.userId),
+        ].filter(Boolean),
+      ),
     );
     if (userIds.length === 0) return;
 
@@ -149,7 +158,8 @@ export default function TaskLogsPage() {
         }
       }),
     ).then((entries) => {
-      if (!cancelled) setUserNames((names) => ({ ...names, ...Object.fromEntries(entries) }));
+      if (!cancelled)
+        setUserNames((names) => ({ ...names, ...Object.fromEntries(entries) }));
     });
 
     return () => {
@@ -261,7 +271,9 @@ export default function TaskLogsPage() {
       {showExportModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-auto">
-            <h2 className="text-xl font-bold mb-4">Exportar registros a Excel</h2>
+            <h2 className="text-xl font-bold mb-4">
+              Exportar registros a Excel
+            </h2>
             <div className="space-y-4">
               <label className="flex items-center gap-2">
                 <input
@@ -301,7 +313,9 @@ export default function TaskLogsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="block text-sm font-medium mb-1">Fecha inicio</span>
+                  <span className="block text-sm font-medium mb-1">
+                    Fecha inicio
+                  </span>
                   <input
                     type="date"
                     value={exportStartDate}
@@ -313,7 +327,9 @@ export default function TaskLogsPage() {
                   />
                 </label>
                 <label className="block">
-                  <span className="block text-sm font-medium mb-1">Fecha fin</span>
+                  <span className="block text-sm font-medium mb-1">
+                    Fecha fin
+                  </span>
                   <input
                     type="date"
                     value={exportEndDate}
@@ -341,9 +357,13 @@ export default function TaskLogsPage() {
                 </div>
                 <div className="border rounded max-h-48 overflow-auto p-2 space-y-2">
                   {usersLoading ? (
-                    <p className="text-sm text-gray-500">Cargando usuarios...</p>
+                    <p className="text-sm text-gray-500">
+                      Cargando usuarios...
+                    </p>
                   ) : exportUsers.length === 0 ? (
-                    <p className="text-sm text-gray-500">No hay usuarios disponibles.</p>
+                    <p className="text-sm text-gray-500">
+                      No hay usuarios disponibles.
+                    </p>
                   ) : (
                     exportUsers.map((user) => (
                       <label key={user.id} className="flex items-center gap-2">
@@ -493,7 +513,8 @@ export default function TaskLogsPage() {
                   <option value="">Seleccionar tarea</option>
                   {visibleTasks.map((task) => (
                     <option key={task.id} value={task.id}>
-                      {task.nombre} - Usuario: {userNames[task.userId] || "Cargando..."}
+                      {task.nombre} - Usuario:{" "}
+                      {userNames[task.userId] || "Cargando..."}
                     </option>
                   ))}
                 </select>
