@@ -82,10 +82,7 @@ export default function TaskLogsPage() {
     }
   }, [exportUsers]);
 
-  const setExportMonth = (
-    date: Date,
-    quickMonth: "current" | "previous",
-  ) => {
+  const setExportMonth = (date: Date, quickMonth: "current" | "previous") => {
     setExportStartDate(formatDateInput(startOfMonth(date)));
     setExportEndDate(formatDateInput(endOfMonth(date)));
     setActiveQuickMonth(quickMonth);
@@ -343,7 +340,10 @@ export default function TaskLogsPage() {
               </div>
 
               <div>
-                <label className="block font-medium mb-2" htmlFor="export-user-search">
+                <label
+                  className="block font-medium mb-2"
+                  htmlFor="export-user-search"
+                >
                   Usuarios
                 </label>
                 <input
@@ -372,23 +372,26 @@ export default function TaskLogsPage() {
                     <p className="text-sm text-gray-500">
                       No hay usuarios disponibles.
                     </p>
+                  ) : filteredExportUsers.length === 0 ? (
+                    <p className="text-sm text-gray-500 py-1">
+                      No hay usuarios que coincidan con la búsqueda.
+                    </p>
                   ) : (
-                    filteredExportUsers.length === 0 ? (
-                      <p className="text-sm text-gray-500 py-1">
-                        No hay usuarios que coincidan con la búsqueda.
-                      </p>
-                    ) : (
-                      filteredExportUsers.map((user) => (
-                        <label key={user.id} className="flex items-center gap-2 py-1">
-                          <input
-                            type="checkbox"
-                            checked={selectedExportUsers.has(user.id)}
-                            onChange={() => toggleExportUser(user.id)}
-                          />
-                          <span>{user.name || "Sin nombre"} ({user.email || user.id})</span>
-                        </label>
-                      ))
-                    )
+                    filteredExportUsers.map((user) => (
+                      <label
+                        key={user.id}
+                        className="flex items-center gap-2 py-1"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedExportUsers.has(user.id)}
+                          onChange={() => toggleExportUser(user.id)}
+                        />
+                        <span>
+                          {user.name || "Sin nombre"} ({user.email || user.id})
+                        </span>
+                      </label>
+                    ))
                   )}
                 </div>
               </div>
