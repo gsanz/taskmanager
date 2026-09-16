@@ -38,12 +38,15 @@ export default function TaskLogsPage() {
     loading: logsLoading,
     fetchTaskLogsByDay,
     createTaskLog,
+    updateTaskLog,
+    deleteTaskLog,
     clearTaskLogs,
   } = useTaskLogs();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [displayedDay, setDisplayedDay] = useState<Date | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
   const [modalTaskId, setModalTaskId] = useState("");
   const [modalDescripcion, setModalDescripcion] = useState("");
   const [modalHoras, setModalHoras] = useState("");
@@ -279,14 +282,22 @@ export default function TaskLogsPage() {
 
     setSubmitting(true);
     try {
-      await createTaskLog({
-        tareaId: modalTaskId,
-        fecha: format(selectedDay, "yyyy-MM-dd"),
-        descripcion: modalDescripcion,
-        horas: Number(modalHoras),
-      });
+      if (editingLogId) {
+        await updateTaskLog(editingLogId, {
+          descripcion: modalDescripcion,
+          horas: Number(modalHoras),
+        });
+      } else {
+        await createTaskLog({
+          tareaId: modalTaskId,
+          fecha: format(selectedDay, "yyyy-MM-dd"),
+          descripcion: modalDescripcion,
+          horas: Number(modalHoras),
+        });
+      }
       await fetchLogsForDay(displayedDay);
       setShowModal(false);
+      setEditingLogId(null);
     } catch (err) {
       console.error("Error creating task log", err);
     } finally {
@@ -296,10 +307,31 @@ export default function TaskLogsPage() {
 
   const openModal = () => {
     setShowModal(true);
+    setEditingLogId(null);
     setModalTaskId("");
     setModalDescripcion("");
     setModalHoras("");
     setModalErrors({ task: false, descripcion: false, horas: false });
+  };
+
+  const openEditModal = (log: (typeof taskLogs)[number]) => {
+    setEditingLogId(log.id);
+    setModalTaskId(log.tareaId);
+    setModalDescripcion(log.descripcion);
+    setModalHoras(String(log.horas));
+    setModalErrors({ task: false, descripcion: false, horas: false });
+    setShowModal(true);
+  };
+
+  const handleDelete = async (log: (typeof taskLogs)[number]) => {
+    if (!window.confirm("¿Quieres eliminar este registro de tarea?")) return;
+
+    try {
+      await deleteTaskLog(log.id);
+      if (displayedDay) await fetchLogsForDay(displayedDay);
+    } catch (err) {
+      console.error("Error deleting task log", err);
+    }
   };
 
   return (
@@ -609,7 +641,25 @@ export default function TaskLogsPage() {
                 <div className="space-y-3 flex-1 overflow-auto">
                   {taskLogs.map((log) => (
                     <div key={log.id} className="p-3 bg-gray-50 rounded border">
-                      <div className="font-medium">{log.tareaNombre}</div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="font-medium">{log.tareaNombre}</div>
+                        <div className="flex gap-2 text-sm">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(log)}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            Modificar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(log)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </div>
                       <div className="text-sm text-gray-600">
                         Usuario: {userNames[log.userId] || "Cargando..."}
                       </div>
@@ -632,7 +682,9 @@ export default function TaskLogsPage() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Asociar Tarea al Día</h2>
+            <h2 className="text-xl font-bold mb-4">
+              {editingLogId ? "Modificar registro de tarea" : "Asociar Tarea al Día"}
+            </h2>
             <p className="text-sm text-gray-500 mb-4">
               Día: {selectedDay ? format(selectedDay, "dd/MM/yyyy") : ""}
             </p>
@@ -649,6 +701,7 @@ export default function TaskLogsPage() {
                     setModalTaskId(event.target.value);
                     setModalErrors((errors) => ({ ...errors, task: false }));
                   }}
+                  disabled={!!editingLogId}
                   className="w-full border rounded px-3 py-2"
                 >
                   <option value="">Seleccionar tarea</option>
@@ -716,7 +769,10 @@ export default function TaskLogsPage() {
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingLogId(null);
+                  }}
                   className="px-4 py-2 bg-gray-300 rounded"
                 >
                   Cancelar
@@ -726,7 +782,11 @@ export default function TaskLogsPage() {
                   disabled={submitting}
                   className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-300"
                 >
-                  {submitting ? "Guardando..." : "Aceptar"}
+                  {submitting
+                    ? "Guardando..."
+                    : editingLogId
+                      ? "Guardar cambios"
+                      : "Aceptar"}
                 </button>
               </div>
             </div>

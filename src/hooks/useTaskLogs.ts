@@ -41,6 +41,18 @@ export function useTaskLogs() {
     [],
   );
 
+  const updateTaskLog = useCallback(
+    async (id: string, taskLog: { descripcion: string; horas: number }) => {
+      const { data } = await client.patch(`/task-logs/${id}`, taskLog);
+      return data;
+    },
+    [],
+  );
+
+  const deleteTaskLog = useCallback(async (id: string) => {
+    await client.delete(`/task-logs/${id}`);
+  }, []);
+
   const clearTaskLogs = useCallback(() => setTaskLogs([]), []);
 
   return {
@@ -48,6 +60,8 @@ export function useTaskLogs() {
     loading,
     fetchTaskLogsByDay,
     createTaskLog,
+    updateTaskLog,
+    deleteTaskLog,
     clearTaskLogs,
   };
 }
