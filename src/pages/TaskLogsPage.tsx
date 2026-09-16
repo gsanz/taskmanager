@@ -558,7 +558,9 @@ export default function TaskLogsPage() {
                     Todos los usuarios
                   </label>
                   {usersLoading ? (
-                    <p className="text-sm text-gray-500">Cargando usuarios...</p>
+                    <p className="text-sm text-gray-500">
+                      Cargando usuarios...
+                    </p>
                   ) : filteredTaskLogUsers.length === 0 ? (
                     <p className="text-sm text-gray-500 py-1">
                       No hay usuarios que coincidan con la búsqueda.
