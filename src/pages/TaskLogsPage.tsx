@@ -91,7 +91,7 @@ export default function TaskLogsPage() {
   const filteredExportUsers = exportUsers.filter((user) => {
     const search = exportUserSearch.trim().toLowerCase();
     if (!search) return true;
-    return [user.name, user.email, user.id].some((value) =>
+    return [user.name, user.secondname || ""].some((value) =>
       value.toLowerCase().includes(search),
     );
   });
@@ -351,7 +351,7 @@ export default function TaskLogsPage() {
                   type="search"
                   value={exportUserSearch}
                   onChange={(event) => setExportUserSearch(event.target.value)}
-                  placeholder="Buscar por nombre, email o ID"
+                  placeholder="Buscar por nombre o segundo nombre"
                   className="w-full border rounded px-3 py-2 mb-3"
                 />
                 <div className="border rounded max-h-48 overflow-auto p-2 space-y-1">
@@ -387,9 +387,9 @@ export default function TaskLogsPage() {
                           checked={selectedExportUsers.has(user.id)}
                           onChange={() => toggleExportUser(user.id)}
                         />
-                        <span>
-                          {user.name || "Sin nombre"} ({user.email || user.id})
-                        </span>
+                        <span>{[user.name, user.secondname]
+                          .filter(Boolean)
+                          .join(" ") || "Sin nombre"}</span>
                       </label>
                     ))
                   )}
