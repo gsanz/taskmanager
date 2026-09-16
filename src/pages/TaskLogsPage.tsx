@@ -15,11 +15,20 @@ import {
   subMonths,
 } from "date-fns";
 import { es } from "date-fns/locale";
+import client from "../api/client";
+
+const formatDateInput = (date: Date) => format(date, "yyyy-MM-dd");
+
+const normaliseRole = (role: string) =>
+  role
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 
 export default function TaskLogsPage() {
   const { tasks } = useTasks();
   const { currentUser, isAdmin } = useAuth();
-  const { getUserById } = useUsers();
+  const { users: exportUsers, loading: usersLoading, getUserById } = useUsers(true);
   const {
     taskLogs,
     loading: logsLoading,
@@ -40,6 +49,78 @@ export default function TaskLogsPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState(
+    formatDateInput(startOfMonth(new Date())),
+  );
+  const [exportEndDate, setExportEndDate] = useState(
+    formatDateInput(endOfMonth(new Date())),
+  );
+  const [isCurrentMonth, setIsCurrentMonth] = useState(true);
+  const [selectedExportUsers, setSelectedExportUsers] = useState<Set<string>>(
+    new Set(),
+  );
+  const [exporting, setExporting] = useState(false);
+
+  const currentRole = normaliseRole(currentUser?.roleName || currentUser?.roleId || "");
+  const canExport = isAdmin || currentRole === "manager";
+  const allExportUsersSelected =
+    exportUsers.length > 0 && selectedExportUsers.size === exportUsers.length;
+
+  useEffect(() => {
+    if (exportUsers.length > 0) {
+      setSelectedExportUsers(new Set(exportUsers.map((user) => user.id)));
+    }
+  }, [exportUsers]);
+
+  const setExportMonth = (date: Date) => {
+    setExportStartDate(formatDateInput(startOfMonth(date)));
+    setExportEndDate(formatDateInput(endOfMonth(date)));
+  };
+
+  const toggleExportUsers = () => {
+    setSelectedExportUsers(
+      allExportUsersSelected
+        ? new Set()
+        : new Set(exportUsers.map((user) => user.id)),
+    );
+  };
+
+  const toggleExportUser = (id: string) => {
+    setSelectedExportUsers((selected) => {
+      const next = new Set(selected);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleExport = async () => {
+    if (!exportStartDate || !exportEndDate || selectedExportUsers.size === 0) return;
+
+    setExporting(true);
+    try {
+      const response = await client.get("/task-logs/export", {
+        params: {
+          fechaInicio: exportStartDate,
+          fechaFin: exportEndDate,
+          userId: Array.from(selectedExportUsers).join(","),
+        },
+        responseType: "blob",
+      });
+      const downloadUrl = URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `task-logs_${exportStartDate}_${exportEndDate}.xlsx`;
+      link.click();
+      URL.revokeObjectURL(downloadUrl);
+      setShowExportModal(false);
+    } catch (err) {
+      console.error("Error exporting task logs", err);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const visibleTasks = isAdmin
     ? currentUser?.id
@@ -151,6 +232,14 @@ export default function TaskLogsPage() {
       <div className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Registro de Tareas</h1>
         <div className="flex items-center gap-4">
+          {canExport && (
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="px-3 py-2 bg-green-600 rounded hover:bg-green-700"
+            >
+              Exportar Excel
+            </button>
+          )}
           <button
             onClick={() => setCurrentDate((date) => subMonths(date, 1))}
             className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600"
@@ -168,6 +257,135 @@ export default function TaskLogsPage() {
           </button>
         </div>
       </div>
+
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-auto">
+            <h2 className="text-xl font-bold mb-4">Exportar registros a Excel</h2>
+            <div className="space-y-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={isCurrentMonth}
+                  onChange={(event) => {
+                    const checked = event.target.checked;
+                    setIsCurrentMonth(checked);
+                    if (checked) setExportMonth(new Date());
+                  }}
+                />
+                <span>Mes actual</span>
+              </label>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCurrentMonth(true);
+                    setExportMonth(new Date());
+                  }}
+                  className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                >
+                  Mes actual
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCurrentMonth(false);
+                    setExportMonth(subMonths(new Date(), 1));
+                  }}
+                  className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                >
+                  Mes anterior
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="block text-sm font-medium mb-1">Fecha inicio</span>
+                  <input
+                    type="date"
+                    value={exportStartDate}
+                    onChange={(event) => {
+                      setIsCurrentMonth(false);
+                      setExportStartDate(event.target.value);
+                    }}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </label>
+                <label className="block">
+                  <span className="block text-sm font-medium mb-1">Fecha fin</span>
+                  <input
+                    type="date"
+                    value={exportEndDate}
+                    onChange={(event) => {
+                      setIsCurrentMonth(false);
+                      setExportEndDate(event.target.value);
+                    }}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </label>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium">Usuarios</span>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={allExportUsersSelected}
+                      onChange={toggleExportUsers}
+                      disabled={usersLoading || exportUsers.length === 0}
+                    />
+                    Todos los usuarios
+                  </label>
+                </div>
+                <div className="border rounded max-h-48 overflow-auto p-2 space-y-2">
+                  {usersLoading ? (
+                    <p className="text-sm text-gray-500">Cargando usuarios...</p>
+                  ) : exportUsers.length === 0 ? (
+                    <p className="text-sm text-gray-500">No hay usuarios disponibles.</p>
+                  ) : (
+                    exportUsers.map((user) => (
+                      <label key={user.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedExportUsers.has(user.id)}
+                          onChange={() => toggleExportUser(user.id)}
+                        />
+                        <span>{user.name || user.email}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowExportModal(false)}
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  disabled={
+                    exporting ||
+                    usersLoading ||
+                    selectedExportUsers.size === 0 ||
+                    !exportStartDate ||
+                    !exportEndDate
+                  }
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-300"
+                >
+                  {exporting ? "Generando..." : "Descargar Excel"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 p-6 overflow-auto">
