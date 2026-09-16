@@ -60,7 +60,10 @@ export default function TaskLogsPage() {
   const [exportEndDate, setExportEndDate] = useState(
     formatDateInput(endOfMonth(new Date())),
   );
-  const [isCurrentMonth, setIsCurrentMonth] = useState(true);
+  const [activeQuickMonth, setActiveQuickMonth] = useState<
+    "current" | "previous" | null
+  >("current");
+  const [exportUserSearch, setExportUserSearch] = useState("");
   const [selectedExportUsers, setSelectedExportUsers] = useState<Set<string>>(
     new Set(),
   );
@@ -79,10 +82,22 @@ export default function TaskLogsPage() {
     }
   }, [exportUsers]);
 
-  const setExportMonth = (date: Date) => {
+  const setExportMonth = (
+    date: Date,
+    quickMonth: "current" | "previous",
+  ) => {
     setExportStartDate(formatDateInput(startOfMonth(date)));
     setExportEndDate(formatDateInput(endOfMonth(date)));
+    setActiveQuickMonth(quickMonth);
   };
+
+  const filteredExportUsers = exportUsers.filter((user) => {
+    const search = exportUserSearch.trim().toLowerCase();
+    if (!search) return true;
+    return [user.name, user.email, user.id].some((value) =>
+      value.toLowerCase().includes(search),
+    );
+  });
 
   const toggleExportUsers = () => {
     setSelectedExportUsers(
@@ -275,37 +290,22 @@ export default function TaskLogsPage() {
               Exportar registros a Excel
             </h2>
             <div className="space-y-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={isCurrentMonth}
-                  onChange={(event) => {
-                    const checked = event.target.checked;
-                    setIsCurrentMonth(checked);
-                    if (checked) setExportMonth(new Date());
-                  }}
-                />
-                <span>Mes actual</span>
-              </label>
-
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => {
-                    setIsCurrentMonth(true);
-                    setExportMonth(new Date());
+                    setExportMonth(new Date(), "current");
                   }}
-                  className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                  className={`px-3 py-1 rounded ${activeQuickMonth === "current" ? "bg-blue-600 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
                 >
                   Mes actual
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    setIsCurrentMonth(false);
-                    setExportMonth(subMonths(new Date(), 1));
+                    setExportMonth(subMonths(new Date(), 1), "previous");
                   }}
-                  className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                  className={`px-3 py-1 rounded ${activeQuickMonth === "previous" ? "bg-blue-600 text-white" : "bg-gray-200 hover:bg-gray-300"}`}
                 >
                   Mes anterior
                 </button>
@@ -320,7 +320,7 @@ export default function TaskLogsPage() {
                     type="date"
                     value={exportStartDate}
                     onChange={(event) => {
-                      setIsCurrentMonth(false);
+                      setActiveQuickMonth(null);
                       setExportStartDate(event.target.value);
                     }}
                     className="w-full border rounded px-3 py-2"
@@ -334,7 +334,7 @@ export default function TaskLogsPage() {
                     type="date"
                     value={exportEndDate}
                     onChange={(event) => {
-                      setIsCurrentMonth(false);
+                      setActiveQuickMonth(null);
                       setExportEndDate(event.target.value);
                     }}
                     className="w-full border rounded px-3 py-2"
@@ -343,9 +343,19 @@ export default function TaskLogsPage() {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">Usuarios</span>
-                  <label className="flex items-center gap-2 text-sm">
+                <label className="block font-medium mb-2" htmlFor="export-user-search">
+                  Usuarios
+                </label>
+                <input
+                  id="export-user-search"
+                  type="search"
+                  value={exportUserSearch}
+                  onChange={(event) => setExportUserSearch(event.target.value)}
+                  placeholder="Buscar por nombre, email o ID"
+                  className="w-full border rounded px-3 py-2 mb-3"
+                />
+                <div className="border rounded max-h-48 overflow-auto p-2 space-y-1">
+                  <label className="flex items-center gap-2 py-1 border-b mb-1">
                     <input
                       type="checkbox"
                       checked={allExportUsersSelected}
@@ -354,8 +364,6 @@ export default function TaskLogsPage() {
                     />
                     Todos los usuarios
                   </label>
-                </div>
-                <div className="border rounded max-h-48 overflow-auto p-2 space-y-2">
                   {usersLoading ? (
                     <p className="text-sm text-gray-500">
                       Cargando usuarios...
@@ -365,16 +373,22 @@ export default function TaskLogsPage() {
                       No hay usuarios disponibles.
                     </p>
                   ) : (
-                    exportUsers.map((user) => (
-                      <label key={user.id} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedExportUsers.has(user.id)}
-                          onChange={() => toggleExportUser(user.id)}
-                        />
-                        <span>{user.name || user.email}</span>
-                      </label>
-                    ))
+                    filteredExportUsers.length === 0 ? (
+                      <p className="text-sm text-gray-500 py-1">
+                        No hay usuarios que coincidan con la búsqueda.
+                      </p>
+                    ) : (
+                      filteredExportUsers.map((user) => (
+                        <label key={user.id} className="flex items-center gap-2 py-1">
+                          <input
+                            type="checkbox"
+                            checked={selectedExportUsers.has(user.id)}
+                            onChange={() => toggleExportUser(user.id)}
+                          />
+                          <span>{user.name || "Sin nombre"} ({user.email || user.id})</span>
+                        </label>
+                      ))
+                    )
                   )}
                 </div>
               </div>
@@ -399,7 +413,7 @@ export default function TaskLogsPage() {
                   }
                   className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-300"
                 >
-                  {exporting ? "Generando..." : "Descargar Excel"}
+                  {exporting ? "Generando..." : "Exportar"}
                 </button>
               </div>
             </div>
