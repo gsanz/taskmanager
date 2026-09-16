@@ -72,6 +72,8 @@ export default function TaskLogsPage() {
     new Set(),
   );
   const [taskLogUserSearch, setTaskLogUserSearch] = useState("");
+  const [isTaskLogUserFilterExpanded, setIsTaskLogUserFilterExpanded] =
+    useState(true);
   const [exporting, setExporting] = useState(false);
 
   const currentRole = normaliseRole(
@@ -519,55 +521,68 @@ export default function TaskLogsPage() {
         <div className="w-96 bg-white border-l p-6 overflow-auto flex flex-col">
           {isAdmin && (
             <div className="mb-5">
-              <label
-                className="block text-sm font-medium mb-2"
-                htmlFor="task-log-user-search"
+              <button
+                type="button"
+                onClick={() =>
+                  setIsTaskLogUserFilterExpanded((expanded) => !expanded)
+                }
+                aria-expanded={isTaskLogUserFilterExpanded}
+                aria-controls="task-log-user-filter-content"
+                className="w-full flex items-center justify-between text-left text-sm font-medium mb-2"
               >
-                Filtrar por usuario
-              </label>
-              <input
-                id="task-log-user-search"
-                type="search"
-                value={taskLogUserSearch}
-                onChange={(event) => setTaskLogUserSearch(event.target.value)}
-                placeholder="Buscar por nombre o segundo nombre"
-                className="w-full border rounded px-3 py-2 mb-2"
-              />
-              <div className="border rounded max-h-48 overflow-auto p-2 space-y-1">
-                <label className="flex items-center gap-2 py-1 border-b mb-1">
-                  <input
-                    type="checkbox"
-                    checked={allTaskLogUsersSelected}
-                    onChange={toggleTaskLogUsers}
-                    disabled={usersLoading || exportUsers.length === 0}
-                  />
-                  Todos los usuarios
-                </label>
-                {usersLoading ? (
-                  <p className="text-sm text-gray-500">Cargando usuarios...</p>
-                ) : filteredTaskLogUsers.length === 0 ? (
-                  <p className="text-sm text-gray-500 py-1">
-                    No hay usuarios que coincidan con la búsqueda.
-                  </p>
-                ) : (
-                  filteredTaskLogUsers.map((user) => (
-                    <label
-                      key={user.id}
-                      className="flex items-center gap-2 py-1"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedTaskLogUsers.has(user.id)}
-                        onChange={() => toggleTaskLogUser(user.id)}
-                      />
-                      <span>
-                        {[user.name, user.secondname]
-                          .filter(Boolean)
-                          .join(" ") || "Sin nombre"}
-                      </span>
-                    </label>
-                  ))
-                )}
+                <span>Filtrar por usuario</span>
+                <span aria-hidden="true">
+                  {isTaskLogUserFilterExpanded ? "▲" : "▼"}
+                </span>
+              </button>
+              <div
+                id="task-log-user-filter-content"
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${isTaskLogUserFilterExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
+              >
+                <input
+                  id="task-log-user-search"
+                  type="search"
+                  value={taskLogUserSearch}
+                  onChange={(event) => setTaskLogUserSearch(event.target.value)}
+                  placeholder="Buscar por nombre o segundo nombre"
+                  className="w-full border rounded px-3 py-2 mb-2"
+                />
+                <div className="border rounded max-h-48 overflow-auto p-2 space-y-1">
+                  <label className="flex items-center gap-2 py-1 border-b mb-1">
+                    <input
+                      type="checkbox"
+                      checked={allTaskLogUsersSelected}
+                      onChange={toggleTaskLogUsers}
+                      disabled={usersLoading || exportUsers.length === 0}
+                    />
+                    Todos los usuarios
+                  </label>
+                  {usersLoading ? (
+                    <p className="text-sm text-gray-500">Cargando usuarios...</p>
+                  ) : filteredTaskLogUsers.length === 0 ? (
+                    <p className="text-sm text-gray-500 py-1">
+                      No hay usuarios que coincidan con la búsqueda.
+                    </p>
+                  ) : (
+                    filteredTaskLogUsers.map((user) => (
+                      <label
+                        key={user.id}
+                        className="flex items-center gap-2 py-1"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedTaskLogUsers.has(user.id)}
+                          onChange={() => toggleTaskLogUser(user.id)}
+                        />
+                        <span>
+                          {[user.name, user.secondname]
+                            .filter(Boolean)
+                            .join(" ") || "Sin nombre"}
+                        </span>
+                      </label>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           )}
